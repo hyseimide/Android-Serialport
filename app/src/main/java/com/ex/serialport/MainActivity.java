@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,12 +25,14 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.ex.serialport.adapter.FloatUtils;
 import com.ex.serialport.adapter.LogListAdapter;
 import com.ex.serialport.adapter.SpAdapter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import android_serialport_api.SerialPortFinder;
@@ -50,12 +53,16 @@ public class MainActivity extends AppCompatActivity {
     private SerialHelper serialHelper;
     private Spinner spBote;
     private Button btOpen;
+    private Button btReadOnceWeight;
+    private Button btReadManyWeight;
     private LogListAdapter logListAdapter;
     private Spinner spDatab;
     private Spinner spParity;
     private Spinner spStopb;
     private Spinner spFlowcon;
     private TextView customBaudrate;
+
+    public long weight0;
 
     @Override
     protected void onDestroy() {
@@ -77,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
         radioGroup = findViewById(R.id.radioGroup);
         radioButton1 = findViewById(R.id.radioButton1);
         radioButton2 = findViewById(R.id.radioButton2);
+
+        btReadOnceWeight = findViewById(R.id.btn_readOnceWeight);
+        btReadManyWeight = findViewById(R.id.btn_readManyWeight);
 
         spDatab = findViewById(R.id.sp_databits);
         spParity = findViewById(R.id.sp_parity);
@@ -103,6 +113,13 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } else {
                             logListAdapter.addData(comBean.sRecTime + " Rx:<==" + ByteUtil.ByteArrToHex(comBean.bRec));
+                            if (comBean.bRec.length == 9 && comBean.bRec[0] == 0x01 && comBean.bRec[1] == 0x03 && comBean.bRec[2] == 0x04) {
+                                byte[] weightBytes = Arrays.copyOfRange(comBean.bRec, 3, 7);
+
+                                    weight0 = FloatUtils.gramsFromBytes(weightBytes);
+                                    Log.d("Rx", "weight: " + weight0);
+
+                                }
                             if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
                                 recy.smoothScrollToPosition(logListAdapter.getData().size());
                             }
@@ -113,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         final String[] ports = serialPortFinder.getAllDevicesPath();
-        final String[] botes = new String[]{"0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400", "4800", "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000", "CUSTOM"};
+        final String[] botes = new String[]{ "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000", "CUSTOM"};
         final String[] databits = new String[]{"8", "7", "6", "5"};
         final String[] paritys = new String[]{"NONE", "ODD", "EVEN", "SPACE", "MARK"};
         final String[] stopbits = new String[]{"1", "2"};
@@ -232,6 +249,19 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        btReadOnceWeight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                readOnceWeight();
+            }
+        });
+        btReadManyWeight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                readManyWeight();
+            }
+        });
+
 
 
         btOpen.setOnClickListener(new View.OnClickListener() {
@@ -290,6 +320,57 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+    private void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+
+        }
+    }
+    public void readManyWeight(){
+        for (long i=0;i<5;i++){
+            readOnceWeight();
+            sleep(100);
+            Log.d("TAG", "readMany: "+i);
+        }
+
+    }
+    public void readOnceWeight(){
+        sleep(100);
+        sendHexData("01050003FF007C3A");
+        sleep(500);
+        sendHexData("0105000300003DCA");
+        sleep(100);
+        sendHexData("010300000002C40B");
+    }
+    private void sendHexData(String command) {
+        SimpleDateFormat sDateFormat = new SimpleDateFormat("hh:mm:ss.SSS");
+        if (command.length() > 0) {
+            if (serialHelper.isOpen()) {
+                try {
+                    Long.parseLong(command, 16); // Try to parse hex value
+                } catch (NumberFormatException e) {
+                    // Show error message if it's not a valid hex number
+                    Toast.makeText(getBaseContext(), R.string.tips_formatting_hex_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Send the hex data via serial port
+                serialHelper.sendHex(command);
+                // Log the transaction
+                logListAdapter.addData(sDateFormat.format(new Date()) + " Tx:==>" + command);
+                // Smooth scroll to the latest log entry
+                if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
+                    recy.smoothScrollToPosition(logListAdapter.getData().size());
+                }
+            } else {
+                // Show error if serial port is not open
+                Toast.makeText(getBaseContext(), R.string.tips_serial_port_not_open, Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Show error if no data is entered
+            Toast.makeText(getBaseContext(), R.string.tips_please_enter_a_data, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showInputDialog() {
