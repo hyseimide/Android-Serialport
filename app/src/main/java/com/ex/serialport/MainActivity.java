@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btOpen;
     private Button btReadOnceWeight;
     private Button btReadManyWeight;
+    private Button btOpenCleanDoor;
     private LogListAdapter logListAdapter;
     private Spinner spDatab;
     private Spinner spParity;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
         btReadOnceWeight = findViewById(R.id.btn_readOnceWeight);
         btReadManyWeight = findViewById(R.id.btn_readManyWeight);
+        btOpenCleanDoor = findViewById(R.id.btn_OpenCleanDoor);
 
         spDatab = findViewById(R.id.sp_databits);
         spParity = findViewById(R.id.sp_parity);
@@ -261,6 +263,12 @@ public class MainActivity extends AppCompatActivity {
                 readManyWeight();
             }
         });
+        btOpenCleanDoor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openCleanDoor();
+            }
+        });
 
 
 
@@ -334,12 +342,20 @@ public class MainActivity extends AppCompatActivity {
             sleep(100);
             Log.d("TAG", "readMany: "+i);
         }
-
+    }
+    public void openCleanDoor(){
+        sleep(100);
+//        sendHexData("01050003FF007C3A");
+        sendHexData("01050002FF002DFA");
+        sleep(1500);
+        sendHexData("0105000200006C0A");
+        sleep(100);
+        sendHexData("010300000002C40B");
     }
     public void readOnceWeight(){
         sleep(100);
         sendHexData("01050003FF007C3A");
-        sleep(500);
+        sleep(1500);
         sendHexData("0105000300003DCA");
         sleep(100);
         sendHexData("010300000002C40B");

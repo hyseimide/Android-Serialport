@@ -139,6 +139,15 @@
         app:layout_constraintLeft_toRightOf="@id/btn_readOnceWeight"
         app:layout_constraintTop_toTopOf="@id/btn_readOnceWeight"
         android:layout_marginLeft="20dp" />
+    <Button
+        android:id="@+id/btn_OpenCleanDoor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="changeEditTextText"
+        android:text="开门"
+        app:layout_constraintLeft_toRightOf="@id/btn_readManyWeight"
+        app:layout_constraintTop_toTopOf="@id/btn_readManyWeight"
+        android:layout_marginLeft="20dp" />
 
     <TextView
         android:id="@+id/tv_parity"
