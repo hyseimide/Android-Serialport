@@ -2,6 +2,8 @@ package com.ex.serialport;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.util.Log;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spStopb;
     private Spinner spFlowcon;
     private TextView customBaudrate;
-
+    private TextView centerText;
     public long weight0;
 
     @Override
@@ -75,31 +77,32 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        recy = findViewById(R.id.recyclerView);
-        spSerial = findViewById(R.id.sp_serial);
-        edInput = findViewById(R.id.ed_input);
-        btSend = findViewById(R.id.btn_send);
-        spBote = findViewById(R.id.sp_baudrate);
-        btOpen = findViewById(R.id.btn_open);
+//        recy = findViewById(R.id.recyclerView);
+//        spSerial = findViewById(R.id.sp_serial);
+//        edInput = findViewById(R.id.ed_input);
+//        btSend = findViewById(R.id.btn_send);
+//        spBote = findViewById(R.id.sp_baudrate);
+//        btOpen = findViewById(R.id.btn_open);
+//
+//        radioGroup = findViewById(R.id.radioGroup);
+//        radioButton1 = findViewById(R.id.radioButton1);
+//        radioButton2 = findViewById(R.id.radioButton2);
+        centerText = findViewById(R.id.centerText);
 
-        radioGroup = findViewById(R.id.radioGroup);
-        radioButton1 = findViewById(R.id.radioButton1);
-        radioButton2 = findViewById(R.id.radioButton2);
+//        btReadOnceWeight = findViewById(R.id.btn_readOnceWeight);
+//        btReadManyWeight = findViewById(R.id.btn_readManyWeight);
+//        btOpenCleanDoor = findViewById(R.id.btn_OpenCleanDoor);
 
-        btReadOnceWeight = findViewById(R.id.btn_readOnceWeight);
-        btReadManyWeight = findViewById(R.id.btn_readManyWeight);
-        btOpenCleanDoor = findViewById(R.id.btn_OpenCleanDoor);
+//        spDatab = findViewById(R.id.sp_databits);
+//        spParity = findViewById(R.id.sp_parity);
+//        spStopb = findViewById(R.id.sp_stopbits);
+//        spFlowcon = findViewById(R.id.sp_flowcon);
+//        customBaudrate = findViewById(R.id.tv_custom_baudrate);
 
-        spDatab = findViewById(R.id.sp_databits);
-        spParity = findViewById(R.id.sp_parity);
-        spStopb = findViewById(R.id.sp_stopbits);
-        spFlowcon = findViewById(R.id.sp_flowcon);
-        customBaudrate = findViewById(R.id.tv_custom_baudrate);
-
-        logListAdapter = new LogListAdapter(null);
-        recy.setLayoutManager(new LinearLayoutManager(this));
-        recy.setAdapter(logListAdapter);
-        recy.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+//        logListAdapter = new LogListAdapter(null);
+//        recy.setLayoutManager(new LinearLayoutManager(this));
+//        recy.setAdapter(logListAdapter);
+//        recy.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
 
         serialPortFinder = new SerialPortFinder();
         serialHelper = new SerialHelper("dev/ttyS1", 115200) {
@@ -108,226 +111,93 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton1) {
-                            logListAdapter.addData(comBean.sRecTime + " Rx:<==" + new String(comBean.bRec, StandardCharsets.UTF_8));
-                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
-                                recy.smoothScrollToPosition(logListAdapter.getData().size());
-                            }
-                        } else {
-                            logListAdapter.addData(comBean.sRecTime + " Rx:<==" + ByteUtil.ByteArrToHex(comBean.bRec));
+//                        if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton1) {
+//                            logListAdapter.addData(comBean.sRecTime + " Rx:<==" + new String(comBean.bRec, StandardCharsets.UTF_8));
+//                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
+//                                recy.smoothScrollToPosition(logListAdapter.getData().size());
+//                            }
+//                        } else {
+//                            logListAdapter.addData(comBean.sRecTime + " Rx:<==" + ByteUtil.ByteArrToHex(comBean.bRec));
                             if (comBean.bRec.length == 9 && comBean.bRec[0] == 0x01 && comBean.bRec[1] == 0x03 && comBean.bRec[2] == 0x04) {
                                 byte[] weightBytes = Arrays.copyOfRange(comBean.bRec, 3, 7);
 
                                     weight0 = FloatUtils.gramsFromBytes(weightBytes);
+                                    centerText.setText(String.valueOf(weight0));
                                     Log.d("Rx", "weight: " + weight0);
 
                                 }
-                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
-                                recy.smoothScrollToPosition(logListAdapter.getData().size());
-                            }
+//                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
+//                                recy.smoothScrollToPosition(logListAdapter.getData().size());
+//                            }
                         }
-                    }
+//                    }
                 });
             }
         };
-
-        final String[] ports = serialPortFinder.getAllDevicesPath();
-        final String[] botes = new String[]{ "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000", "CUSTOM"};
-        final String[] databits = new String[]{"8", "7", "6", "5"};
-        final String[] paritys = new String[]{"NONE", "ODD", "EVEN", "SPACE", "MARK"};
-        final String[] stopbits = new String[]{"1", "2"};
-        final String[] flowcons = new String[]{"NONE", "RTS/CTS", "XON/XOFF"};
-
-
-        SpAdapter spAdapter = new SpAdapter(this);
-        spAdapter.setDatas(ports);
-        spSerial.setAdapter(spAdapter);
-
-        spSerial.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serialHelper.close();
-                serialHelper.setPort(ports[position]);
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        SpAdapter spAdapter2 = new SpAdapter(this);
-        spAdapter2.setDatas(botes);
-        spBote.setAdapter(spAdapter2);
-
-        spBote.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == botes.length - 1) {
-                    showInputDialog();
-                    return;
-                }
-                findViewById(R.id.tv_custom_baudrate).setVisibility(View.GONE);
-                serialHelper.close();
-                serialHelper.setBaudRate(botes[position]);
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        SpAdapter spAdapter3 = new SpAdapter(this);
-        spAdapter3.setDatas(databits);
-        spDatab.setAdapter(spAdapter3);
-
-        spDatab.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serialHelper.close();
-                serialHelper.setDataBits(Integer.parseInt(databits[position]));
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        SpAdapter spAdapter4 = new SpAdapter(this);
-        spAdapter4.setDatas(paritys);
-        spParity.setAdapter(spAdapter4);
-
-        spParity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serialHelper.close();
-                serialHelper.setParity(position);
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        SpAdapter spAdapter5 = new SpAdapter(this);
-        spAdapter5.setDatas(stopbits);
-        spStopb.setAdapter(spAdapter5);
-
-        spStopb.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serialHelper.close();
-                serialHelper.setStopBits(Integer.parseInt(stopbits[position]));
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        SpAdapter spAdapter6 = new SpAdapter(this);
-        spAdapter6.setDatas(flowcons);
-        spFlowcon.setAdapter(spAdapter6);
-
-        spFlowcon.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serialHelper.close();
-                serialHelper.setFlowCon(position);
-                btOpen.setEnabled(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        btReadOnceWeight.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                readOnceWeight();
-            }
-        });
-        btReadManyWeight.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                readManyWeight();
-            }
-        });
-        btOpenCleanDoor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openCleanDoor();
-            }
-        });
+        // 直接设置固定的串口参数
+        serialHelper.setPort("/dev/ttyS3");  // 串口端口
+        serialHelper.setBaudRate("9600");  // 波特率
+        serialHelper.setDataBits(8);         // 数据位
+        serialHelper.setParity(0);           // 校验位（0 = NONE）
+        serialHelper.setStopBits(1);         // 停止位
+        serialHelper.setFlowCon(0);          // 流控（0 = NONE）
+        try {
+            serialHelper.open();
+//            btOpen.setEnabled(false);
+        } catch (IOException | SecurityException e) {
+            Toast.makeText(this, getString(R.string.tips_cannot_be_opened, e.getMessage()), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
 
 
+//        btReadOnceWeight.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                readOnceWeight();
+//            }
+//        });
+//        btReadManyWeight.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                readManyWeight();
+//            }
+//        });
+//        btOpenCleanDoor.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                openCleanDoor();
+//            }
+//        });
+        readCloseStatus();
 
-        btOpen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    serialHelper.open();
-                    btOpen.setEnabled(false);
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, getString(R.string.tips_cannot_be_opened, e.getMessage()), Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                } catch (SecurityException se) {
-                    Toast.makeText(MainActivity.this, getString(R.string.tips_cannot_be_opened, se.getMessage()), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+    }
+    Handler handler = new Handler(Looper.getMainLooper());
 
-        btSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SimpleDateFormat sDateFormat = new SimpleDateFormat("hh:mm:ss.SSS");
-                if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton1) {
-                    if (edInput.getText().toString().length() > 0) {
-                        if (serialHelper.isOpen()) {
-                            serialHelper.sendTxt(edInput.getText().toString());
-                            logListAdapter.addData(sDateFormat.format(new Date()) + " Tx:==>" + edInput.getText().toString());
-                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
-                                recy.smoothScrollToPosition(logListAdapter.getData().size());
-                            }
-                        } else {
-                            Toast.makeText(getBaseContext(), R.string.tips_serial_port_not_open, Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(getBaseContext(), R.string.tips_please_enter_a_data, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    if (edInput.getText().toString().length() > 0) {
-                        if (serialHelper.isOpen()) {
-                            try {
-                                Long.parseLong(edInput.getText().toString(), 16);
-                            } catch (NumberFormatException e) {
-                                Toast.makeText(getBaseContext(), R.string.tips_formatting_hex_error, Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            serialHelper.sendHex(edInput.getText().toString());
-                            logListAdapter.addData(sDateFormat.format(new Date()) + " Tx:==>" + edInput.getText().toString());
-                            if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
-                                recy.smoothScrollToPosition(logListAdapter.getData().size());
-                            }
-                        } else {
-                            Toast.makeText(getBaseContext(), R.string.tips_serial_port_not_open, Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(getBaseContext(), R.string.tips_please_enter_a_data, Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        });
+    private final Runnable repeatReadStatus = new Runnable() {
+        @Override
+        public void run() {
+            // Do something here on the main thread
+            sendHexData("010300000002C40B");
+            handler.postDelayed(repeatReadStatus, 500);
+        }
+    };
+
+    private void readCloseStatus() {
+        handler.postDelayed(repeatReadStatus, 1000);
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        openSerialPort();
+    }
+    private void openSerialPort() {
+        try {
+            serialHelper.open();
+            btOpen.setEnabled(false);
+        } catch (IOException | SecurityException e) {
+            Toast.makeText(this, getString(R.string.tips_cannot_be_opened, e.getMessage()), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
     }
     private void sleep(long time) {
         try {
@@ -374,11 +244,11 @@ public class MainActivity extends AppCompatActivity {
                 // Send the hex data via serial port
                 serialHelper.sendHex(command);
                 // Log the transaction
-                logListAdapter.addData(sDateFormat.format(new Date()) + " Tx:==>" + command);
+//                logListAdapter.addData(sDateFormat.format(new Date()) + " Tx:==>" + command);
                 // Smooth scroll to the latest log entry
-                if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
-                    recy.smoothScrollToPosition(logListAdapter.getData().size());
-                }
+//                if (logListAdapter.getData() != null && logListAdapter.getData().size() > 0) {
+//                    recy.smoothScrollToPosition(logListAdapter.getData().size());
+//                }
             } else {
                 // Show error if serial port is not open
                 Toast.makeText(getBaseContext(), R.string.tips_serial_port_not_open, Toast.LENGTH_SHORT).show();

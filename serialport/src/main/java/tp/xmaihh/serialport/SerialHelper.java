@@ -20,7 +20,7 @@ public abstract class SerialHelper {
     private InputStream mInputStream;
     private ReadThread mReadThread;
     private SendThread mSendThread;
-    private String sPort = "/dev/ttyS1";
+    private String sPort = "/dev/ttyS3";
     private int iBaudRate = 9600;
     private int stopBits = 1;
     private int dataBits = 8;
